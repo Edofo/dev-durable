@@ -24,21 +24,23 @@ const index = [
         bg: "./assets/images/bg-mountains4.jpeg",
         isActive: false,
     },
-    {
-        id: 4,
-        bg: "./assets/images/finish.jpeg",
-        isActive: false,
-    },
+    // {
+    //     id: 4,
+    //     bg: "./assets/images/finish.jpeg",
+    //     isActive: false,
+    // },
 ];
 
 const transition = "height 2s ease-in-out, opacity 2s ease-in-out";
-const minCloud = 85;
+const minCloud = 60;
 const maxCloud = 200;
+const step = 800;
 
 window.addEventListener("load", () => {
     cloud.style.transition = transition;
     hero.classList.add("animate");
     document.body.style.overflow = "hidden";
+    document.body.style.height = step * index.length * 1.1 + "px";
 
     setTimeout(() => {
         cloud.style.transition = "";
@@ -48,12 +50,11 @@ window.addEventListener("load", () => {
 
 window.addEventListener("scroll", () => {
     const scroll = window.scrollY;
-    const step = 500;
 
     const actualIndex = index.find((el) => el.isActive);
     if (actualIndex.isLoading) return;
 
-    const cloudHeight = minCloud + ((scroll - actualIndex.id * step) / step) * 110;
+    const cloudHeight = minCloud + ((scroll - actualIndex.id * step) / step) * (maxCloud - minCloud);
     cloud.style.height = `${cloudHeight}vh`;
 
     const opacity = 0.9 + ((scroll - actualIndex.id * step) / step) * 0.1;
@@ -97,6 +98,10 @@ const switchHero = (findIndex) => {
         findIndex.isLoading = true;
 
         heroContents[findIndex.id].classList.add("display");
+        // get height of hero
+        const heroHeight = hero.offsetHeight;
+        const percentHeight = (75 * heroHeight) / 100;
+        heroContents[findIndex.id].style.top = `${percentHeight + findIndex.id * step}px`;
 
         // disable scroll
         document.body.style.overflow = "hidden";
@@ -114,6 +119,6 @@ const switchHero = (findIndex) => {
         }, 2000);
 
         // scroll to the of the section
-        window.scroll(0, findIndex.id * 500);
+        window.scroll(0, findIndex.id * step);
     }
 };
