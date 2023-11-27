@@ -1,40 +1,36 @@
-const hero = document.getElementById("hero");
-const bg = document.getElementById("hero-img");
-const cloud = document.getElementsByClassName("hero-cloud")[0];
-const heroContents = document.getElementsByClassName("hero-content");
+const hero = document.querySelector("#hero");
+const bg = document.querySelector("#hero-img");
+const cloud = document.querySelector(".hero-cloud");
+const heroContents = document.querySelectorAll(".hero-content");
 
-const index = [
+let index = [
     {
         id: 0,
-        bg: "./assets/images/bg-mountains.jpeg",
+        bg: "./assets/images/bg.webp",
         isActive: true,
     },
     {
         id: 1,
-        bg: "./assets/images/bg-mountains2.jpeg",
+        bg: "./assets/images/bg2.webp",
         isActive: false,
     },
     {
         id: 2,
-        bg: "./assets/images/bg-mountains3.jpeg",
+        bg: "./assets/images/bg3.webp",
         isActive: false,
     },
     {
         id: 3,
-        bg: "./assets/images/bg-mountains4.jpeg",
+        bg: "./assets/images/bg4.webp",
         isActive: false,
     },
-    // {
-    //     id: 4,
-    //     bg: "./assets/images/finish.jpeg",
-    //     isActive: false,
-    // },
 ];
 
-const transition = "height 2s ease-in-out, opacity 2s ease-in-out";
-const minCloud = 60;
-const maxCloud = 200;
+const transition = "width 2s ease-in-out, opacity 2s ease-in-out";
+const minCloud = 100;
+const maxCloud = 350;
 const step = 800;
+const heroTransition = "top 2s ease-in-out";
 
 window.addEventListener("load", () => {
     cloud.style.transition = transition;
@@ -48,48 +44,44 @@ window.addEventListener("load", () => {
     }, 2000);
 });
 
-window.addEventListener("scroll", () => {
-    const scroll = window.scrollY;
-
-    const actualIndex = index.find((el) => el.isActive);
-    if (actualIndex.isLoading) return;
-
-    const cloudHeight = minCloud + ((scroll - actualIndex.id * step) / step) * (maxCloud - minCloud);
-    cloud.style.height = `${cloudHeight}vh`;
+const updateCloudStyle = (scroll, actualIndex) => {
+    const cloudWidth = minCloud + ((scroll - actualIndex.id * step) / step) * (maxCloud - minCloud);
+    cloud.style.width = `${cloudWidth}vw`;
 
     const opacity = 0.9 + ((scroll - actualIndex.id * step) / step) * 0.1;
     cloud.style.opacity = opacity;
-    // Check if cloud height is less than 200vh before proceeding
-    if (cloudHeight >= maxCloud) {
-        const findIndex = index.find((el, i, arr) => {
-            const nextIndex = arr[i + 1];
-            return el.id * step <= scroll && (nextIndex ? scroll < nextIndex.id * step : true) && !el.isActive;
-        });
 
-        switchHero(findIndex);
-
+    if (cloudWidth >= maxCloud) {
+        const findIndex = index.find((el) => el.id === actualIndex.id + 1);
+        switchHero(findIndex, true);
         heroContents[actualIndex.id].classList.remove("display");
     }
 
-    if (cloudHeight <= minCloud && actualIndex.id !== 0) {
+    if (cloudWidth <= minCloud && actualIndex.id !== 0) {
         // get the previous index
         const findIndex = index.find((el) => el.id === actualIndex.id - 1);
         findIndex.isLoading = true;
         document.body.style.overflow = "hidden";
 
-        // set 200vh to the cloud height
+        const heroContent = heroContents[actualIndex.id];
+        heroContent.style.transition = heroTransition;
+
+        const heroHeight = hero.offsetHeight;
+        const percentHeight = (75 * heroHeight) / 100;
+        heroContent.style.top = `${percentHeight + findIndex.id * step}px`;
+
         cloud.style.transition = transition;
-        cloud.style.height = `${maxCloud}vh`;
+        cloud.style.width = `${maxCloud}vw`;
         cloud.style.opacity = 1;
 
         setTimeout(() => {
             cloud.style.transition = "";
-            switchHero(findIndex);
+            switchHero(findIndex, false);
 
             heroContents[actualIndex.id].classList.remove("display");
         }, 2000);
     }
-});
+};
 
 const switchHero = (findIndex) => {
     if (findIndex) {
@@ -97,17 +89,19 @@ const switchHero = (findIndex) => {
         findIndex.isActive = true;
         findIndex.isLoading = true;
 
-        heroContents[findIndex.id].classList.add("display");
-        // get height of hero
+        const heroContent = heroContents[findIndex.id];
+        heroContent.classList.add("display");
+        heroContent.style.top = "0px";
+        heroContent.style.transition = heroTransition;
+
         const heroHeight = hero.offsetHeight;
         const percentHeight = (75 * heroHeight) / 100;
-        heroContents[findIndex.id].style.top = `${percentHeight + findIndex.id * step}px`;
+        heroContent.style.top = `${percentHeight + findIndex.id * step}px`;
 
-        // disable scroll
         document.body.style.overflow = "hidden";
 
         cloud.style.transition = transition;
-        cloud.style.height = `${minCloud}vh`;
+        cloud.style.width = `${minCloud}vw`;
         cloud.style.opacity = 0.9;
 
         bg.src = findIndex.bg;
@@ -118,7 +112,16 @@ const switchHero = (findIndex) => {
             document.body.style.overflow = "";
         }, 2000);
 
-        // scroll to the of the section
         window.scroll(0, findIndex.id * step);
     }
 };
+
+const handleScrollEvent = () => {
+    const scroll = window.scrollY;
+    const actualIndex = index.find((el) => el.isActive);
+    if (actualIndex.isLoading) return;
+
+    updateCloudStyle(scroll, actualIndex);
+};
+
+window.addEventListener("scroll", handleScrollEvent);
